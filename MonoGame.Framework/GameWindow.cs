@@ -31,7 +31,14 @@ namespace Microsoft.Xna.Framework {
         public abstract Point Position { get; set; }
 #endif
 
-		public abstract DisplayOrientation CurrentOrientation { get; }
+#if WINDOWS || DESKTOPGL || WINDOWS_UAP
+        /// <summary>
+        /// Allow dropping of file onto window
+        /// </summary>
+        public abstract bool AllowDropFile { get; set; }
+#endif
+
+        public abstract DisplayOrientation CurrentOrientation { get; }
 
 		public abstract IntPtr Handle { get; }
 
@@ -104,9 +111,13 @@ namespace Microsoft.Xna.Framework {
 		public event EventHandler<TextInputEventArgs> TextInput;
 #endif
 
-		#endregion Events
+#if WINDOWS || DESKTOPGL || WINDOWS_UAP
+        public event EventHandler<DropFileEventArgs> DropFile;
+#endif
 
-		public abstract void BeginScreenDeviceChange (bool willBeFullScreen);
+        #endregion Events
+
+        public abstract void BeginScreenDeviceChange (bool willBeFullScreen);
 
 		public abstract void EndScreenDeviceChange (
 			string screenDeviceName, int clientWidth, int clientHeight);
@@ -149,8 +160,14 @@ namespace Microsoft.Xna.Framework {
             EventHelpers.Raise(this, TextInput, e);
 		}
 #endif
+#if WINDOWS || DESKTOPGL || WINDOWS_UAP
+        protected void OnDropFile(object sender, DropFileEventArgs e)
+        {
+            EventHelpers.Raise(this, DropFile, e);
+        }
+#endif
 
-		protected internal abstract void SetSupportedOrientations (DisplayOrientation orientations);
+        protected internal abstract void SetSupportedOrientations (DisplayOrientation orientations);
 		protected abstract void SetTitle (string title);
 
 #if DIRECTX && WINDOWS

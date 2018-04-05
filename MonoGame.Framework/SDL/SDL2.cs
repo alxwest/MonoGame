@@ -124,6 +124,8 @@ internal static class Sdl
         public Joystick.DeviceEvent JoystickDevice;
         [FieldOffset(0)]
         public GameController.DeviceEvent ControllerDevice;
+        [FieldOffset(0)]
+        public Drop.FileEvent Drop;
     }
 
     public struct Rectangle
@@ -696,6 +698,19 @@ internal static class Sdl
 
         [DllImport(NativeLibName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SDL_GetModState")]
         public static extern Keymod GetModState();
+    }
+
+    public static class Drop
+    {
+
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct FileEvent
+        {
+            public EventType Type;
+            public uint Timestamp;
+            public char* File;
+            public uint WindowId;
+        }
     }
 
     public static class Joystick

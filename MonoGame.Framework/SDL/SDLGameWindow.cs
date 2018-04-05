@@ -55,6 +55,11 @@ namespace Microsoft.Xna.Framework
             }
         }
 
+        public override bool AllowDropFile
+        {
+            get;set;
+        }
+
         public override DisplayOrientation CurrentOrientation
         {
             get { return DisplayOrientation.Default; }
@@ -300,6 +305,11 @@ namespace Microsoft.Xna.Framework
         public void CallTextInput(char c, Keys key = Keys.None)
         {
             OnTextInput(this, new TextInputEventArgs(c, key));
+        }
+
+        public void CallDropFile(string filePath)
+        {
+            OnDropFile(this, new DropFileEventArgs(filePath));
         }
 
         protected internal override void SetSupportedOrientations(DisplayOrientation orientations)

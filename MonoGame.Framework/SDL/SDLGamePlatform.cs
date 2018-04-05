@@ -185,6 +185,17 @@ namespace Microsoft.Xna.Framework
                     else if (ev.Window.EventID == Sdl.Window.EventId.Moved)
                         _view.Moved();
                 }
+                else if(ev.Type == Sdl.EventType.DropFile)
+                {
+                    if (_view.AllowDropFile)
+                    {                       
+                        unsafe
+                        {
+                            var filePath = Marshal.PtrToStringAnsi((IntPtr)ev.Drop.File);
+                            _view.CallDropFile(filePath);
+                        }
+                    }
+                }
             }
         }
 

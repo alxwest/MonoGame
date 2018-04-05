@@ -257,6 +257,9 @@
     <Compile Include="CurveTangent.cs" />
     <Compile Include="DisplayOrientation.cs" />
     <Compile Include="DrawableGameComponent.cs" />
+    <Compile Include="DropFileEventArgs.cs" >
+		<Platforms>MacOS,Windows,WindowsGL,WindowsUniversal</Platforms>
+    </Compile>
 	<Compile Include="EventHelpers.cs" />
     <Compile Include="FrameworkDispatcher.cs" />
 	<Compile Include="FrameworkResources.cs" />

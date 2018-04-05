@@ -108,6 +108,19 @@ namespace MonoGame.Framework
             }
         }
 
+        public override bool AllowDropFile
+        {
+            get
+            {
+                return Form.AllowDrop;
+            }
+
+            set
+            {
+                Form.AllowDrop = value;
+            }
+        }
+
         protected internal override void SetSupportedOrientations(DisplayOrientation orientations)
         {
         }
@@ -162,8 +175,13 @@ namespace MonoGame.Framework
 
             Form.KeyPress += OnKeyPress;
 
+            Form.DragEnter += OnDragEnter;
+            Form.DragDrop += OnDragDrop;
+
             RegisterToAllWindows();
         }
+
+       
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct POINTSTRUCT
@@ -324,6 +342,27 @@ namespace MonoGame.Framework
         private void OnKeyPress(object sender, KeyPressEventArgs e)
         {
             OnTextInput(sender, new TextInputEventArgs(e.KeyChar));
+        }
+
+        private void OnDragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void OnDragDrop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if(files.Length == 1)
+            {
+                OnDropFile(sender, new DropFileEventArgs(files[0]));
+            }            
         }
 
         internal void Initialize(int width, int height)

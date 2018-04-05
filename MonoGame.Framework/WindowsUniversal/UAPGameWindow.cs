@@ -16,6 +16,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
 using Windows.UI.Xaml.Controls;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 
 namespace Microsoft.Xna.Framework
 {
@@ -29,7 +31,7 @@ namespace Microsoft.Xna.Framework
         private Rectangle _viewBounds;
 
         private object _eventLocker = new object();
-
+        private UIElement _inputElement;
         private InputEvents _inputEvents;
         private readonly ConcurrentQueue<char> _textQueue = new ConcurrentQueue<char>();
         private bool _isSizeChanged = false;
@@ -65,6 +67,12 @@ namespace Microsoft.Xna.Framework
             {
                 // You cannot resize a Metro window!
             }
+        }
+
+        public override bool AllowDropFile
+        {
+            get { return _inputElement.AllowDrop; }
+            set { _inputElement.AllowDrop = value; }
         }
 
         public override DisplayOrientation CurrentOrientation
@@ -111,7 +119,8 @@ namespace Microsoft.Xna.Framework
         public void Initialize(CoreWindow coreWindow, UIElement inputElement, TouchQueue touchQueue)
         {
             _coreWindow = coreWindow;
-            _inputEvents = new InputEvents(_coreWindow, inputElement, touchQueue);
+            _inputElement = inputElement;
+            _inputEvents = new InputEvents(_coreWindow, _inputElement, touchQueue);
 
             _dinfo = DisplayInformation.GetForCurrentView();
             _appView = ApplicationView.GetForCurrentView();
@@ -136,8 +145,27 @@ namespace Microsoft.Xna.Framework
 
             SetCursor(false);
 
-        }
+            _inputElement.DragOver += UIElement_DragOver;
+            _inputElement.Drop += UIElement_DropAsync;
 
+        }
+        
+        private void UIElement_DragOver(object sender, DragEventArgs e)
+        {
+            e.AcceptedOperation = DataPackageOperation.Copy;
+        }
+        private async void UIElement_DropAsync(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                var storageItems = await e.DataView.GetStorageItemsAsync();
+                if (storageItems.Count > 0 && !string.IsNullOrEmpty(storageItems[0].Path))
+                {
+                    OnDropFile(sender, new DropFileEventArgs(storageItems[0].Path)); 
+                }
+            }
+        }
+        
         internal void RegisterCoreWindowService()
         {
             // Register the CoreWindow with the services registry
@@ -184,7 +212,7 @@ namespace Microsoft.Xna.Framework
             lock (_eventLocker)
             {
                 _isSizeChanged = true;
-                var pixelWidth  = Math.Max(1, (int)Math.Round(args.Size.Width * _dinfo.RawPixelsPerViewPixel));
+                var pixelWidth = Math.Max(1, (int)Math.Round(args.Size.Width * _dinfo.RawPixelsPerViewPixel));
                 var pixelHeight = Math.Max(1, (int)Math.Round(args.Size.Height * _dinfo.RawPixelsPerViewPixel));
                 _newViewBounds = new Rectangle(0, 0, pixelWidth, pixelHeight);
             }
@@ -278,7 +306,7 @@ namespace Microsoft.Xna.Framework
 
         private void DisplayProperties_OrientationChanged(DisplayInformation dinfo, object sender)
         {
-            lock(_eventLocker)
+            lock (_eventLocker)
             {
                 _isOrientationChanged = true;
                 _newOrientation = ToOrientation(dinfo.CurrentOrientation);
@@ -327,16 +355,16 @@ namespace Microsoft.Xna.Framework
 
         internal void SetCursor(bool visible)
         {
-            if ( _coreWindow == null )
+            if (_coreWindow == null)
                 return;
 
-            var asyncResult = _coreWindow.Dispatcher.RunIdleAsync( (e) =>
-           {
-               if (visible)
-                   _coreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
-               else
-                   _coreWindow.PointerCursor = null;
-           });
+            var asyncResult = _coreWindow.Dispatcher.RunIdleAsync((e) =>
+          {
+              if (visible)
+                  _coreWindow.PointerCursor = new CoreCursor(CoreCursorType.Arrow, 0);
+              else
+                  _coreWindow.PointerCursor = null;
+          });
         }
 
         internal void RunLoop()
@@ -362,7 +390,7 @@ namespace Microsoft.Xna.Framework
             _inputEvents.UpdateState();
 
             // Update TextInput
-            if(!_textQueue.IsEmpty)
+            if (!_textQueue.IsEmpty)
                 UpdateTextInput();
 
             // Update size
